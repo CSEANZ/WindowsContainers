@@ -1,7 +1,7 @@
 # Windows Containers in Azure with Kubernetes
 Windows containers, Classic ASP, COM+, IIS and 32-bit code. Kubernetes. Azure. What else could you want?
 
-This artical and code explores setting up a Windows Docker container based on Windows Server Core 1709. 
+This article and code explores setting up a Windows Docker container based on Windows Server Core 1709. 
 
 Getting your own app up and running inside a container can be a non-trivial task, especially if it's an older app. You'll need to make sure you have the ability to automatically install/deploy the app in non-interactive mode as Windows Server Core has no GUI!
 
@@ -72,7 +72,7 @@ This image is based on [microsoft/iis](https://hub.docker.com/r/microsoft/iis/).
 
 Of note in the microsoft/iis Dockerfile is the last line - `ENTRYPOINT ["C:\\ServiceMonitor.exe", "w3svc"]`. Docker containers run until the process they are watching exits. In this case, the process to be watched is IIS, but you don't just add a `CMD` or `ENTRYPOINT` command to fire up IIS - it's managed by windows. [ServiceMonitor](https://github.com/Microsoft/IIS.ServiceMonitor) is a tool that does just this - it watches any Windows service until it exits. 
 
-ServiceMonitor is installed during the container build process by running some PowerShell that downloads the exe to the container. This is common practice for utilities (downloading them) - and indeed it's utilitsed further on in this article. 
+ServiceMonitor is installed during the container build process by running some PowerShell that downloads the exe to the container. This is common practice for utilities (downloading them) - and indeed it's utilised further on in this article. 
 
 ```PowerShell
 RUN powershell -Command `
