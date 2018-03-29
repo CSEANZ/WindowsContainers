@@ -125,17 +125,211 @@ To stop your container type `docker stop <containerid>`.
 
 This container is great - it demonstrates how easy it is to get IIS up and running inside a Windows container. Let's build something more substantial and customisable. 
 
+This section is based on this [Dockerfile](https://github.com/CSEANZ/WindowsContainers/blob/master/Docker/WindowsAndIIS/Dockerfile) by [Regan Murphy](https://twitter.com/nzregs). 
 
+#### Kick things off
 
-### Useful links
+```Dockerfile
+# escape=`
+FROM microsoft/windowsservercore:1709
+```
 
-Noel Bundick has a bunch of useful commands on his GitHub - check them out [here](https://github.com/noelbundick/ContainerTools). 
+Sets the escape char to ``` and inherits from the "microsoft/windowsservercore:1709" base image. It does not inherit from "microsoft/iis" as this one is more customisable. 
 
+#### Prep the environment
 
+```Dockerfile
+SHELL ["powershell", "-command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+```
 
+This line makes Windows Powershell the default prompt when using the `RUN` command in your Dockerfile. Makes things nice and easy!
 
+#### Install container tools
 
-### Links
+```Dockerfile
+# Install ContainerTools
+ENV ContainerToolsVersion=0.0.1
+RUN Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force; `
+    Set-PsRepository -Name PSGallery -InstallationPolicy Trusted; `
+    Install-Module -Name ContainerTools -MinimumVersion $Env:ContainerToolsVersion -Confirm:$false
+```
+
+[ContainerTools](https://github.com/noelbundick/ContainerTools) is an alternate method to watching services, logs and to force the container to wait. We're not using it directly in this example, but check it out. It's work knowing about / trying out. 
+
+#### Enable IIS Windows features
+
+```Dockerfile
+# Install IIS, add features, enable 32bit on AppPool
+RUN Install-WindowsFeature -name Web-Server; `
+    Add-WindowsFeature Web-Static-Content, Web-ASP, WoW64-Support; `
+    Import-Module WebAdministration; `
+    set-itemProperty IIS:\apppools\DefaultAppPool -name "enable32BitAppOnWin64" -Value "true"; `
+    Restart-WebAppPool "DefaultAppPool"
+```
+Here we're turning on IIS with various features (like Classic ASP! In the modern container world!) as well as creating the default app pool which supports 32bit mode. 
+
+```Dockerfile
+# Download the com components and test pages from github
+RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; `
+    Invoke-WebRequest -Uri https://github.com/nzregs/vb6MathLib/raw/master/MathLibNZRegs.dll -OutFile c:\inetpub\wwwroot\MathLibNZRegs.dll; `
+    Invoke-WebRequest -Uri https://github.com/nzregs/vb6MathLib/raw/master/msvbvm60.dll -OutFile c:\inetpub\wwwroot\msvbvm60.dll; `
+    Invoke-WebRequest -Uri https://github.com/nzregs/vb6MathLib/raw/master/default.asp -OutFile c:\inetpub\wwwroot\default.asp; `
+    Invoke-WebRequest -Uri https://github.com/nzregs/vb6MathLib/raw/master/test.asp -OutFile c:\inetpub\wwwroot\test.asp; `
+    $regsvr = [System.Environment]::ExpandEnvironmentVariables('%windir%\SysWOW64\regsvr32.exe'); `
+    Start-Process $regsvr  -ArgumentList '/s', "c:\inetpub\wwwroot\msvbvm60.dll" -Wait; `
+    Start-Process $regsvr  -ArgumentList '/s', "c:\inetpub\wwwroot\MathLibNZRegs.dll" -Wait
+```
+This section is downloading some COM components and ASP pages from Regans [public GitHub](https://github.com/nzregs) and saving them to the local path before running regsvr32 on them to register them as COM components with Windows. These .dll files are VB6 based components. 
+
+```Dockerfile
+RUN powershell -Command `
+    Add-WindowsFeature Web-Server; `
+    Invoke-WebRequest -UseBasicParsing -Uri "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.2/ServiceMonitor.exe" -OutFile "C:\ServiceMonitor.exe"
+
+EXPOSE 80
+
+ENTRYPOINT ["C:\\ServiceMonitor.exe", "w3svc"]
+```
+
+This section downloads ServiceMonitor (like before), exposes port 80 from the container, and sets the entry point to have ServiceMonitor watch w3svc, the IIS service. 
+
+### Build the custom container
+
+Just like before, build this dockerfile (switch to the path in terminal first). 
+
+```
+docker build -t classicaspiis .
+docker run --rm -t -P classicaspiis
+docker ps -a
+```
+
+Find the port in the output listing and navigate to that path in your browser. 
+
+![ASP in a container!](https://user-images.githubusercontent.com/5225782/38066956-026b932c-3356-11e8-87ed-b5c1f02f7a83.PNG)
+
+That's it,  you're running Classic ASP, COM+, 32bit and the rest inside a Windows container. 
+
+## Kubernetes and Windows Containers
+
+Azure has a variety of options when it comes to containers and orchestrators - including Kubernetes. 
+
+One service is the [Azure Container Service (managed) or AKS](https://docs.microsoft.com/en-us/azure/aks/). This services sets up a cluster for you and manages the running, updating and general maintenance of that cluster for you. The problem is that right now AKS doesn't support Windows containers. That means we need a more customised approach - but fear not... this is an easy process. 
+
+Underneath the hood, AKS uses something called the [acs-engine](https://github.com/Azure/acs-engine). This engine allows you to generate [ARM](https://docs.microsoft.com/en-gb/azure/azure-resource-manager/resource-group-overview) templates which will go and set up a cluster for you. 
+
+### Set up a Kubernetes cluster on Azure
+
+To help with this process we'll use a [Yeoman Generator](http://yeoman.io/) to help get started. 
+
+Full generator instructions are located [here](https://github.com/jakkaj/generator-acsengine). Head there to see the full requirements and getting started guide. Remember to check out the [instructional video](https://www.youtube.com/watch?v=J3CZkL7rt6Y&feature=youtu.be) if you get stuck. 
+
+Make sure you:
+
+- Install Node.ks 
+- Install the generator using npm
+- Generate a service principal
+- Get your Azure subscription id
+- Pick a region
+- Pick a dns name
+- Pick a resource group name
+
+**Note:** We really suggest you choose a new unique resource group name and don't reuse an existing one. This way you can easily clean up your cluster later. Also, it's a good idea to create your Container Registry in a different group to your cluster so you can create and delete clusters without destroying your private registry. 
+
+Make a new folder and run the generator by typing `yo acsengine` and enter the required fields. 
+
+This will produce an acs-engine template as well as some Powershell scripts to help get the cluster started. 
+
+Run the scripts as per the [instructions](https://github.com/jakkaj/generator-acsengine) ([video](https://www.youtube.com/watch?v=J3CZkL7rt6Y&feature=youtu.be)) and soon enough you'll have a cluster. 
+
+### Create a container registry
+
+In order to utilise your new containers in Kubernetes you'll need a container registry. [Docker Hub](https://hub.docker.com/) is one example of a registry. Azure provides a private container resistry you can use - which thanks to your service principle will be accessible to your Kubernets cluster. Check out the [Quickstarts](https://docs.microsoft.com/en-gb/azure/container-registry/) to set one up.
+
+Once you done that, grab the admin user and password from the "Access keys" tab. You may need to enable the Admin user mode to grab them.
+
+Also copy the name of the registry - e.g "someregistry.azurecr.io". 
+
+At the command login and enter your credentials. 
+
+```
+docker login someregistry.azurecr.io
+```
+
+### Push the image to the private registry
+
+Pushing images is easy. You're logged in already, you just need to tag the image correctly to push it to the registry. It's based on convention of "reponame/containername". In this case it woudl be "someregistry.azurecr.io/classicaspiis". You can also put a version number on that so you can deploy newer versions with the same name e.g. "someregistry.azurecr.io/classicaspiis:1". 
+
+You do not have to rebuild the container to "tag" it with a new name. 
+
+```
+docker tag classicaspiis someregistry.azurecr.io/classicaspiis:1
+```
+
+Now type `docker images` to see the newly tagged image name as well as the original. Note they both have the same IMAGE ID. Cool eh?
+
+```
+docker push someregistry.azurecr.io/classicaspiis:1
+```
+
+This will push the image up to the container registry ready for consumption inside Kubernetes. 
+
+### Check the progress of your cluster
+
+After a while your cluster will be ready. 
+
+"kubectl" is the most commonly used tool to investigate and alter Kubernetes clusters. There are others (including [graphical](https://kubernetic.com/) ones) , but for now this will do. 
+
+Before kubectl can explore your cluster, it needs to be configured. By default there is a "config" file in ~/.kube/config. This file may or may not exist on your machine. In the case of the yo generator you just ran, there is a script (`4_set_kubectl_config.ps1`) that will temporarily set up an environment var in your current Powershell session for kubectl to use. If you like you can take the file this powershell scipt points to and manually integrate it in to ~/.kube/config.
+
+The acs-engine has output a range of config files for use depending on the region you selected - look in "_output\<dnsname>\kubeconfig" for the files. `4_set_kubectl_config.ps1` will automatically be referencing the correct one.  
+
+**Warning:** the files acs-engine outputs are .json, kubectl defaults to .yaml - you may need to use something like [this](https://kubernetes-v1-4.github.io/docs/user-guide/kubectl/kubectl_config_view/) with the `--flatten` option to help out with the migration. 
+
+Once this is done, type
+
+```
+kubectl cluster-info 
+```
+Check that the cluster outputs are what you expect. 
+
+You can now create some [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/)!
+
+### Deploy your container
+
+At a high level containers are deployed in pods, by deployments and exposed by services. 
+
+In the files generated by the yo generator, navigate to the "kube" path. In there are two files, one each for Windows and Linux. 
+
+Open "kube.windows.yaml". Find the line:
+
+```yaml
+image: jakkaj/reganasp:1
+```
+
+Replace it with the image you uploaded to the private registry e.g. `someregistry.azurecr.io/classicaspiis:1`. 
+
+Type `kubectl apply -f kube.windows.yaml'. This will push up the desired state to the cluster which will create the pods and services. 
+
+To see how to pod is going type `kubectl get pods`. 
+
+To see the public ip for the service type `kubectl get svc`. 
+
+If you have any problems, list the pods, then ask for more details on that pod. 
+
+```
+kubectl get pods
+kubectl describe pod <somepodid>
+```
+
+Once the pod is listed as "Ready", grab the external ip from `kubectl get svc` and navigate to it. You will see your Classic ASP site running in you new Kubernetes cluster. 
+
+### Cleaning Up
+
+If you want to remove your cluster you can run `powershell\x_delete_resource_group.ps1`. Please remember that this will kill everything in the resource group - including the container registry if you created it here. It will also kill anything that was **already in the group**. If you didn't create the resource group just for this exercise, don't delete it until you're sure what's in there!
+
+ 
+
+## Useful Links
 
 - [Useful PowerShell commands](https://github.com/noelbundick/ContainerTools)
 
@@ -147,3 +341,8 @@ Noel Bundick has a bunch of useful commands on his GitHub - check them out [here
 - [acs-engine](https://github.com/Azure/acs-engine)
 - [acs-engine Yeoman Generator](https://github.com/jakkaj/generator-acsengine)
 - [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [Azure Container Service (managed) or AKS](https://docs.microsoft.com/en-us/azure/aks/)
+- [Azure Resource Manager](https://docs.microsoft.com/en-gb/azure/azure-resource-manager/resource-group-overview) 
+- [Kubernetes Pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/)
+- [Kubernetic Kubernets GUI](https://kubernetic.com/)
+- [Kubectl config view documentation](https://kubernetes-v1-4.github.io/docs/user-guide/kubectl/kubectl_config_view/)
