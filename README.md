@@ -1,5 +1,5 @@
-# Windows Containers
-Windows containers, Classic ASP, COM+, IIS and 32-bit code. Kubernetes. What else could you want?
+# Windows Containers in Azure with Kubernetes
+Windows containers, Classic ASP, COM+, IIS and 32-bit code. Kubernetes. Azure. What else could you want?
 
 This artical and code explores setting up a Windows Docker container based on Windows Server Core 1709. 
 
@@ -327,7 +327,7 @@ Once the pod is listed as "Ready", grab the external ip from `kubectl get svc` a
 
 If you want to remove your cluster you can run `powershell\x_delete_resource_group.ps1`. Please remember that this will kill everything in the resource group - including the container registry if you created it here. It will also kill anything that was **already in the group**. If you didn't create the resource group just for this exercise, don't delete it until you're sure what's in there!
 
- 
+
 
 ## Useful Links
 
