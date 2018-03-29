@@ -245,7 +245,7 @@ Run the scripts as per the [instructions](https://github.com/jakkaj/generator-ac
 
 In order to utilise your new containers in Kubernetes you'll need a container registry. [Docker Hub](https://hub.docker.com/) is one example of a registry. Azure provides a private container resistry you can use - which thanks to your service principle will be accessible to your Kubernets cluster. Check out the [Quickstarts](https://docs.microsoft.com/en-gb/azure/container-registry/) to set one up.
 
-Once you done that, grab the admin user and password from the "Access keys" tab. You may need to enable the Admin user mode to grab them.
+Once you've done that, grab the admin user and password from the "Access keys" tab. You may need to enable the Admin user mode to grab them.
 
 Also copy the name of the registry - e.g "someregistry.azurecr.io". 
 
@@ -257,7 +257,7 @@ docker login someregistry.azurecr.io
 
 ### Push the image to the private registry
 
-Pushing images is easy. You're logged in already, you just need to tag the image correctly to push it to the registry. It's based on convention of "reponame/containername". In this case it woudl be "someregistry.azurecr.io/classicaspiis". You can also put a version number on that so you can deploy newer versions with the same name e.g. "someregistry.azurecr.io/classicaspiis:1". 
+Pushing images is easy. You're logged in already, you just need to tag the image correctly to push it to the registry. It's based on convention of "reponame/containername". In this case it would be "someregistry.azurecr.io/classicaspiis". You can also put a version number on that so you can deploy newer versions with the same name e.g. "someregistry.azurecr.io/classicaspiis:1". 
 
 You do not have to rebuild the container to "tag" it with a new name. 
 
@@ -279,7 +279,7 @@ After a while your cluster will be ready.
 
 "kubectl" is the most commonly used tool to investigate and alter Kubernetes clusters. There are others (including [graphical](https://kubernetic.com/) ones) , but for now this will do. 
 
-Before kubectl can explore your cluster, it needs to be configured. By default there is a "config" file in ~/.kube/config. This file may or may not exist on your machine. In the case of the yo generator you just ran, there is a script (`4_set_kubectl_config.ps1`) that will temporarily set up an environment var in your current Powershell session for kubectl to use. If you like you can take the file this powershell scipt points to and manually integrate it in to ~/.kube/config.
+Before kubectl can explore your cluster, it needs to be configured. By default there is a "config" file in ~/.kube/config. This file may or may not exist on your machine. In the case of the yo generator you just ran, there is a script (`4_set_kubectl_config.ps1`) that will temporarily set up an environment var in your current Powershell session for kubectl to use. If you like you can take the file this powershell script points to and manually integrate it in to ~/.kube/config.
 
 The acs-engine has output a range of config files for use depending on the region you selected - look in "_output\<dnsname>\kubeconfig" for the files. `4_set_kubectl_config.ps1` will automatically be referencing the correct one.  
 
@@ -308,7 +308,7 @@ image: jakkaj/reganasp:1
 
 Replace it with the image you uploaded to the private registry e.g. `someregistry.azurecr.io/classicaspiis:1`. 
 
-Type `kubectl apply -f kube.windows.yaml'. This will push up the desired state to the cluster which will create the pods and services. 
+Type `kubectl apply -f kube.windows.yaml`. This will push up the desired state to the cluster which will create the pods and services. 
 
 To see how to pod is going type `kubectl get pods`. 
 
