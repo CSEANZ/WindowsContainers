@@ -179,7 +179,7 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
     Start-Process $regsvr  -ArgumentList '/s', "c:\inetpub\wwwroot\msvbvm60.dll" -Wait; `
     Start-Process $regsvr  -ArgumentList '/s', "c:\inetpub\wwwroot\MathLibNZRegs.dll" -Wait
 ```
-This section is downloading some COM components and ASP pages from Regans [public GitHub](https://github.com/nzregs) and saving them to the local path before running regsvr32 on them to register them as COM components with Windows. These .dll files are VB6 based components. 
+This section is downloading some COM components and ASP pages from Regan's [public GitHub](https://github.com/nzregs) and saving them to the local path before running regsvr32 on them to register them as COM components with Windows. These .dll files are VB6 based components. 
 
 ```Dockerfile
 RUN powershell -Command `
