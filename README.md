@@ -223,7 +223,7 @@ To help with this process we'll use a [Yeoman Generator](http://yeoman.io/) to h
 
 Full generator instructions are located [here](https://github.com/jakkaj/generator-acsengine). Head there to see the full requirements and getting started guide. Remember to check out the [instructional video](https://www.youtube.com/watch?v=J3CZkL7rt6Y&feature=youtu.be) if you get stuck. 
 
-The [Docker version of the instructional video](https://www.youtube.com/edit?o=U&video_id=YFtyW9kIJSU) is available too. 
+The [Docker version of the instructional video](https://youtu.be/YFtyW9kIJSU) is available too. 
 
 ### Use the pre-built Docker image
 
