@@ -223,6 +223,24 @@ To help with this process we'll use a [Yeoman Generator](http://yeoman.io/) to h
 
 Full generator instructions are located [here](https://github.com/jakkaj/generator-acsengine). Head there to see the full requirements and getting started guide. Remember to check out the [instructional video](https://www.youtube.com/watch?v=J3CZkL7rt6Y&feature=youtu.be) if you get stuck. 
 
+The [Docker version of the instructional video](https://www.youtube.com/edit?o=U&video_id=YFtyW9kIJSU) is available too. 
+
+### Use the pre-built Docker image
+
+We've created a Docker image you can use to get your cluster going. 
+
+To pull the pre-prepared environment follow these steps. 
+
+- Install Docker
+- `docker pull jakkaj/acsengine`
+- `docker run -d -t jakkaj/acsengine`
+- `docker ps -a` to find running image id
+- `docker exec -it <containerid> bash`
+- `./sp.sh` to start by creating your service principal
+- `yo ascengine` and you're on your way.  
+
+### Do it yourself version
+
 Make sure you:
 
 - Install Node.ks 
@@ -293,6 +311,24 @@ kubectl cluster-info
 Check that the cluster outputs are what you expect. 
 
 You can now create some [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/)!
+
+### Tool to help with kubectl configs
+
+We've crated a tool called [kubecfg](https://github.com/jakkaj/kubecfg) to help manage kubectl configs. You can install it by typing `npm install -g kubecfg`. It's pre-installed in the docker container. 
+
+Navigate to the path that your config file resides and type:
+
+```
+kubecfg -a <filename>
+```
+
+To remove that file 
+
+```
+kubecfg -r <filename>
+```
+
+Remember to reload your environment vars as per the instructions provided by kubecfg. 
 
 ### Deploy your container
 
