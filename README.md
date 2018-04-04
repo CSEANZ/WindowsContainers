@@ -9,7 +9,7 @@ Rather than bog down in all that, this article explores some of the basic buildi
 
 ### What's Covered Here?
 
-We'll cover how to set up the following inside a Docker container. 
+We'll cover how to set up the following inside a Docker container.
 
 - COM+ (32-bit)
 - VB6 based Classic ASP site
@@ -19,11 +19,12 @@ We'll cover how to set up the following inside a Docker container.
 
 ### Getting Started
 
-You'll need Windows 10 (latest build) as well as the latest build of Docker for Windows to support Windows based containers. 
+You'll need Windows 10 (latest build) as well as the latest build of Docker for Windows to support Windows based containers.
 
 #### The Docker Bits
 
 - [Windows 10 Pro 64-bit](https://www.microsoft.com/en-au/software-download/windows10). The current version of Docker for Windows runs on 64bit Windows 10 Pro, Enterprise and Education (1607 Anniversary Update, Build 14393 or later)
+- You can also download a free 90-day evaluation of Windows 10 Enterprise from [here](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-10-enterprise). 
 - [Docker for Windows](https://docs.docker.com/docker-for-windows/)
 - [Visual Studio Code](https://code.visualstudio.com/)
 - [Hyper Terminal](https://github.com/zeit/hyper). Not essential, but highly recommend as there will be a bit of terminal based work. 
@@ -261,13 +262,17 @@ Run the scripts as per the [instructions](https://github.com/jakkaj/generator-ac
 
 ### Create a container registry
 
-In order to utilise your new containers in Kubernetes you'll need a container registry. [Docker Hub](https://hub.docker.com/) is one example of a registry. Azure provides a private container resistry you can use - which thanks to your service principle will be accessible to your Kubernets cluster. Check out the [Quickstarts](https://docs.microsoft.com/en-gb/azure/container-registry/) to set one up.
+In order to utilise your new containers in Kubernetes you'll need a container registry. [Docker Hub](https://hub.docker.com/) is one example of a registry. Azure provides a private container resistry you can use - which thanks to your service principle will be accessible to your Kubernets cluster. Check out the [Quickstarts](https://docs.microsoft.com/en-gb/azure/container-registry/) to set one up, or use the following CLI commands:
 
-Once you've done that, grab the admin user and password from the "Access keys" tab. You may need to enable the Admin user mode to grab them.
+```az acr create -l australiasoutheast -n someregistry -g resourcegroupname --sku Basic --admin-enabled true```
 
-Also copy the name of the registry - e.g "someregistry.azurecr.io". 
+Once you've done that in the portal, grab the admin user and password from the "Access keys" tab. You may need to enable the Admin user mode to grab them. To get them using the CLI, use the following command:
 
-At the command login and enter your credentials. 
+```az acr credential show --name someregistry```
+
+Also copy the name of the registry - e.g "someregistry.azurecr.io".
+
+At the command login and enter your credentials.
 
 ```
 docker login someregistry.azurecr.io
@@ -293,7 +298,7 @@ This will push the image up to the container registry ready for consumption insi
 
 ### Check the progress of your cluster
 
-After a while your cluster will be ready. 
+After a while your cluster will be ready.
 
 "kubectl" is the most commonly used tool to investigate and alter Kubernetes clusters. There are others (including [graphical](https://kubernetic.com/) ones) , but for now this will do. 
 
@@ -372,6 +377,7 @@ If you want to remove your cluster you can run `powershell\x_delete_resource_gro
 - [Docker for Windows](https://docs.docker.com/docker-for-windows/)
 - [Visual Studio Code](https://code.visualstudio.com/)
 - [Windows 10 Pro 64-bit](https://www.microsoft.com/en-au/software-download/windows10). The current version of Docker for Windows runs on 64bit Windows 10 Pro, Enterprise and Education (1607 Anniversary Update, Build 14393 or later)
+- [90-day evaluation of Windows 10 Enterprise](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-10-enterprise)
 - [Hyper Terminal](https://github.com/zeit/hyper)
 - [Node.js](https://nodejs.org/en/download/current/). Ensure you install current. 
 - [acs-engine](https://github.com/Azure/acs-engine)
